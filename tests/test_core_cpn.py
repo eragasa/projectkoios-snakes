@@ -8,6 +8,7 @@ from snakes.nets import (
     Expression,
     PetriNet,
     Place,
+    Substitution,
     Test,
     Transition,
     Value,
@@ -61,6 +62,13 @@ def build_concurrent_join_net() -> PetriNet:
 
 
 class CoreColoredNetTest(unittest.TestCase):
+    def test_expression_substitution_preserves_constants(self) -> None:
+        expression = Expression("request_id == 'run-1'")
+
+        expression.substitute(Substitution(request_id="candidate_id"))
+
+        self.assertEqual(str(expression), "(candidate_id == 'run-1')")
+
     def test_independent_branches_join_in_either_order(self) -> None:
         for branch_order in (
             ("project_qe", "project_vasp"),
