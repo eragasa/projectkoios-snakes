@@ -1,5 +1,7 @@
 dist/*
 build/
+*.egg-info/
+.venv/
 dput.sh
 *.pyc
 *~
