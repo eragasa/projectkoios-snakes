@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import dataclass
 
 from snakes.nets import (
     Expression,
@@ -15,17 +16,45 @@ from snakes.nets import (
     Variable,
     dot,
 )
+from snakes.typing import Instance
+
+
+@dataclass(frozen=True, slots=True)
+class ScfRequest:
+    request_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class QeObservation:
+    request_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class VaspObservation:
+    request_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class ScfComparison:
+    request_id: str
 
 
 def build_concurrent_join_net() -> PetriNet:
     """Build two independently enabled branches followed by a join."""
     net = PetriNet("concurrent-join")
-    net.add_place(Place("requested", ["run-1"]))
+    net.globals["QeObservation"] = QeObservation
+    net.globals["VaspObservation"] = VaspObservation
+    net.globals["ScfComparison"] = ScfComparison
+    net.add_place(
+        Place("requested", [ScfRequest("run-1")], Instance(ScfRequest))
+    )
     net.add_place(Place("qe_permit", [dot]))
     net.add_place(Place("vasp_permit", [dot]))
-    net.add_place(Place("qe_ready"))
-    net.add_place(Place("vasp_ready"))
-    net.add_place(Place("comparison_ready"))
+    net.add_place(Place("qe_ready", check=Instance(QeObservation)))
+    net.add_place(Place("vasp_ready", check=Instance(VaspObservation)))
+    net.add_place(
+        Place("comparison_ready", check=Instance(ScfComparison))
+    )
 
     net.add_transition(Transition("project_qe"))
     net.add_input("requested", "project_qe", Test(Variable("request")))
@@ -33,7 +62,7 @@ def build_concurrent_join_net() -> PetriNet:
     net.add_output(
         "qe_ready",
         "project_qe",
-        Expression("('qe', request)"),
+        Expression("QeObservation(request.request_id)"),
     )
 
     net.add_transition(Transition("project_vasp"))
@@ -42,13 +71,15 @@ def build_concurrent_join_net() -> PetriNet:
     net.add_output(
         "vasp_ready",
         "project_vasp",
-        Expression("('vasp', request)"),
+        Expression("VaspObservation(request.request_id)"),
     )
 
     net.add_transition(
         Transition(
             "compare",
-            Expression("qe_observation[1] == vasp_observation[1]"),
+            Expression(
+                "qe_observation.request_id == vasp_observation.request_id"
+            ),
         )
     )
     net.add_input("qe_ready", "compare", Variable("qe_observation"))
@@ -56,7 +87,7 @@ def build_concurrent_join_net() -> PetriNet:
     net.add_output(
         "comparison_ready",
         "compare",
-        Expression("('comparison', qe_observation[1])"),
+        Expression("ScfComparison(qe_observation.request_id)"),
     )
     return net
 
@@ -92,9 +123,12 @@ class CoreColoredNetTest(unittest.TestCase):
 
                 net.transition("compare").fire(comparison_modes[0])
 
-                self.assertIn("run-1", net.place("requested"))
                 self.assertIn(
-                    ("comparison", "run-1"),
+                    ScfRequest("run-1"),
+                    net.place("requested"),
+                )
+                self.assertIn(
+                    ScfComparison("run-1"),
                     net.place("comparison_ready"),
                 )
                 self.assertTrue(net.place("qe_ready").is_empty())
