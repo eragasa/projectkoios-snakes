@@ -290,6 +290,7 @@ class Unparser:
     def _Str(self, tree):
         self.write(repr(tree.s))
 
+    # Project Koios: Python 3.8+ represents literal values as Constant nodes.
     def _Constant(self, tree):
         self.write(repr(tree.value))
 

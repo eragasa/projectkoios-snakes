@@ -1,3 +1,4 @@
+# Project Koios: use an isolated modern build while preserving setup.py metadata.
 [build-system]
 requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"

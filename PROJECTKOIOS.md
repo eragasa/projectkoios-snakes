@@ -21,3 +21,9 @@ The first maintained baseline targets Python 3.14 core colored-net behavior: typ
 SNAKES expressions, declarations, and PNML deserialization are trusted-code facilities. Project Koios integrations must not evaluate untrusted expressions or deserialize untrusted PNML or pickle payloads.
 
 Calculator execution, durable observations, retries, audit, and replay remain outside the SNAKES firing kernel.
+
+## Revision notes
+
+Every Project Koios commit carries a concise `Revision note:` paragraph in its commit message body. `REVISION_NOTES.md` records the initial commits that predate this convention without rewriting published history.
+
+Edits to inherited upstream source carry an adjacent `Project Koios:` comment explaining the compatibility or behavioral reason. New Project Koios code documents its purpose and important semantic boundaries with docstrings or comments; comments are not repeated on self-explanatory mechanical lines.

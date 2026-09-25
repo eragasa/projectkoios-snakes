@@ -1,5 +1,6 @@
 dist/*
 build/
+# Project Koios: ignore isolated-build metadata and local environments.
 *.egg-info/
 .venv/
 dput.sh
